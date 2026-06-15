@@ -28,7 +28,7 @@ static float g_startPct = 0.f, g_maxPct = 0.f;   // this attempt's start% and fu
 static bool  g_fired = false;                    // one clip per attempt
 static std::string g_bufferLevel;                // level we've already told OBS to start buffering for
 
-static const float TOL = 0.5f;
+static const float TOL = 1.5f;
 
 static void parseRules(const std::string& s) {
     std::vector<Rule> rules;
