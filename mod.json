@@ -12,7 +12,8 @@
             "name": "Record rules",
             "description": "Comma-separated A-B ranges. Records any run that started at or before A% AND reached at least B%. Examples: 0-100 = only full clears. 43-100 = any run from <=43% that finishes. Multiple: 0-100, 43-100",
             "type": "string",
-            "default": "0-100"
+            "default": "0-100",
+            "filter": "0123456789-, "
         },
         "practice": {
             "name": "Record in practice mode",
