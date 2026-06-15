@@ -1,0 +1,52 @@
+{
+    "geode": "5.7.1",
+    "gd": { "mac": "2.2081" },
+    "version": "v1.0.0",
+    "id": "liam.clipper",
+    "name": "GD Auto-Clipper",
+    "developer": "Liam",
+    "description": "Automatically saves an OBS replay clip (with game audio + mic) of the runs you choose - full clears, or any start% to end%. Press F4 to set up.",
+    "tags": ["utility"],
+    "settings": {
+        "rules": {
+            "name": "Record rules",
+            "description": "Comma-separated A-B ranges. Records any run that started at or before A% AND reached at least B%. Examples: 0-100 = only full clears. 43-100 = any run from <=43% that finishes. Multiple: 0-100, 43-100",
+            "type": "string",
+            "default": "0-100"
+        },
+        "practice": {
+            "name": "Record in practice mode",
+            "description": "If off (default), completions in practice mode are ignored.",
+            "type": "bool",
+            "default": false
+        },
+        "pad-after": {
+            "name": "Seconds after win",
+            "description": "How long to keep recording after a run matches (so the win animation lands in the clip) before saving the replay buffer.",
+            "type": "int",
+            "default": 5,
+            "min": 0,
+            "max": 30
+        },
+        "obs-host": {
+            "name": "OBS host",
+            "description": "OBS WebSocket host. Leave as localhost unless OBS runs on another machine.",
+            "type": "string",
+            "default": "localhost"
+        },
+        "obs-port": {
+            "name": "OBS port",
+            "description": "OBS WebSocket port (Tools > WebSocket Server Settings). Default 4455.",
+            "type": "int",
+            "default": 4455,
+            "min": 1,
+            "max": 65535
+        },
+        "obs-password": {
+            "name": "OBS password",
+            "description": "OBS WebSocket password (Tools > WebSocket Server Settings > Show Connect Info). Leave blank only if you disabled authentication.",
+            "type": "string",
+            "default": ""
+        }
+    }
+}
