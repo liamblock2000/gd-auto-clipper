@@ -74,14 +74,19 @@ static void fireClip() {
     int padAfter = (int) Mod::get()->getSettingValue<int64_t>("pad-after");
     std::thread([cfg, padAfter] {
         if (padAfter > 0) std::this_thread::sleep_for(std::chrono::seconds(padAfter));
-        bool ok = obsws::saveReplayBuffer(cfg);
-        log::info("[Clipper] SaveReplayBuffer -> {}", ok);
-        geode::queueInMainThread([ok] {
-            // small, short toast at the bottom -- never blocks gameplay even if it pops mid-run
+        std::string path;
+        bool ok = obsws::saveReplayBuffer(cfg, path);
+        log::info("[Clipper] SaveReplayBuffer -> {} | {}", ok, path);
+        geode::queueInMainThread([ok, path] {
+            // small toast at the bottom; shows WHERE the clip went so you can find it
+            std::string msg = ok
+                ? (path.empty() ? std::string("Clip saved (check OBS recording folder)")
+                                : "Clip saved -> " + path)
+                : std::string("Clip failed (OBS?)");
             Notification::create(
-                ok ? "Clip saved" : "Clip failed (OBS?)",
+                msg,
                 ok ? NotificationIcon::Success : NotificationIcon::Error,
-                1.2f
+                ok ? 3.0f : 1.5f
             )->show();
         });
     }).detach();

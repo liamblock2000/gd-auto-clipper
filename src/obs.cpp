@@ -216,52 +216,74 @@ int connectWS(const std::string& host, int port) {
     return s;
 }
 
-// connect, identify (with auth if required), send one request, return true if result==true
-bool doRequest(const obsws::Config& cfg, const std::string& requestType) {
+// connect + identify (with auth if required). eventSubscriptions:0 = no unsolicited events, so
+// request/response stays clean even across multiple requests. Returns a ready socket, or -1.
+int connectAndIdentify(const obsws::Config& cfg) {
     int s = connectWS(cfg.host, cfg.port);
-    if (s < 0) { log::warn("[Clipper] OBS: connect failed ({}:{})", cfg.host, cfg.port); return false; }
+    if (s < 0) { log::warn("[Clipper] OBS: connect failed ({}:{})", cfg.host, cfg.port); return -1; }
 
     std::string hello;
-    if (!wsRecv(s, hello)) { close(s); return false; }            // op 0: Hello
+    if (!wsRecv(s, hello)) { close(s); return -1; }               // op 0: Hello
 
     std::string identify;
     if (hello.find("\"authentication\"") != std::string::npos) {
         if (cfg.password.empty()) {
             log::warn("[Clipper] OBS auth required but no password set (F4 -> OBS password)");
-            close(s); return false;
+            close(s); return -1;
         }
         std::string salt = extract(hello, "\"salt\":\"");
         std::string challenge = extract(hello, "\"challenge\":\"");
         std::string auth = computeAuth(cfg.password, salt, challenge);
-        identify = "{\"op\":1,\"d\":{\"rpcVersion\":1,\"authentication\":\"" + auth + "\"}}";
+        identify = "{\"op\":1,\"d\":{\"rpcVersion\":1,\"eventSubscriptions\":0,\"authentication\":\"" + auth + "\"}}";
     } else {
-        identify = "{\"op\":1,\"d\":{\"rpcVersion\":1}}";
+        identify = "{\"op\":1,\"d\":{\"rpcVersion\":1,\"eventSubscriptions\":0}}";
     }
-    if (!wsSendText(s, identify)) { close(s); return false; }
+    if (!wsSendText(s, identify)) { close(s); return -1; }
 
     std::string ident;
-    if (!wsRecv(s, ident)) { close(s); return false; }            // op 2: Identified
+    if (!wsRecv(s, ident)) { close(s); return -1; }               // op 2: Identified
     if (ident.find("\"op\":2") == std::string::npos) {
         log::warn("[Clipper] OBS identify failed: {}", ident);
-        close(s); return false;
+        close(s); return -1;
     }
+    return s;
+}
 
+// send one request (op 6) and read its response (op 7); fill resp, return true if result==true
+bool sendReq(int s, const std::string& requestType, std::string& resp) {
     std::string req =
         "{\"op\":6,\"d\":{\"requestType\":\"" + requestType +
-        "\",\"requestId\":\"clip\",\"requestData\":{}}}";
-    if (!wsSendText(s, req)) { close(s); return false; }
-
-    std::string resp;
-    if (!wsRecv(s, resp)) { close(s); return false; }             // op 7: RequestResponse
-    close(s);
+        "\",\"requestId\":\"r\",\"requestData\":{}}}";
+    if (!wsSendText(s, req)) return false;
+    if (!wsRecv(s, resp)) return false;
     return resp.find("\"result\":true") != std::string::npos;
+}
+
+bool doRequest(const obsws::Config& cfg, const std::string& requestType) {
+    int s = connectAndIdentify(cfg);
+    if (s < 0) return false;
+    std::string resp;
+    bool ok = sendReq(s, requestType, resp);
+    close(s);
+    return ok;
 }
 
 } // anonymous namespace
 
 namespace obsws {
-    bool saveReplayBuffer(const Config& cfg) {
-        return doRequest(cfg, "SaveReplayBuffer");
+    bool saveReplayBuffer(const Config& cfg, std::string& outPath) {
+        int s = connectAndIdentify(cfg);
+        if (s < 0) return false;
+        std::string resp;
+        bool ok = sendReq(s, "SaveReplayBuffer", resp);
+        if (ok) {
+            usleep(700000);                       // let OBS finish writing the file
+            std::string resp2;
+            if (sendReq(s, "GetLastReplayBufferReplay", resp2))
+                outPath = extract(resp2, "\"savedReplayPath\":\"");
+        }
+        close(s);
+        return ok;
     }
     bool ensureReplayBufferRunning(const Config& cfg) {
         // StartReplayBuffer is a no-op (harmless error) if already running, so this is safe to spam.
