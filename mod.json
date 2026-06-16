@@ -21,13 +21,28 @@
             "type": "bool",
             "default": false
         },
-        "pad-after": {
-            "name": "Seconds after win",
-            "description": "How long to keep recording after a run matches (so the win animation lands in the clip) before saving the replay buffer.",
+        "pad-before": {
+            "name": "Seconds before run",
+            "description": "Extra footage kept BEFORE the run started (only applies when ffmpeg trimming is active).",
             "type": "int",
             "default": 5,
             "min": 0,
             "max": 30
+        },
+        "pad-after": {
+            "name": "Seconds after run",
+            "description": "How long to keep recording after a run matches (so the win/death lands in the clip) before saving the replay buffer.",
+            "type": "int",
+            "default": 5,
+            "min": 0,
+            "max": 30
+        },
+        "ffmpeg-path": {
+            "name": "ffmpeg path (optional)",
+            "description": "Path to ffmpeg, used to auto-trim clips to the run length. Leave blank to auto-detect (~/bin, Homebrew, /usr). Without ffmpeg, clips are the full replay-buffer length.",
+            "type": "string",
+            "default": "",
+            "filter": "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/._- ~"
         },
         "obs-host": {
             "name": "OBS host",

@@ -13,8 +13,9 @@ Built for **macOS** (where there wasn't a clip tool like this), using OBS's Repl
 You can't start recording *after* you win — the run's already over. So this mod relies on
 **OBS's Replay Buffer**, which continuously keeps the last few minutes of gameplay in memory.
 When a run matches one of your rules, the mod tells OBS to **save that buffer** — giving you a
-clip of what *just* happened. The clip is the length of your replay buffer (the classic
-"instant replay" model).
+clip of what *just* happened. If **ffmpeg** is available, the clip is automatically trimmed down
+to the actual run length (+ padding) and named after the level; otherwise you get the full
+replay-buffer length (the classic "instant replay" model).
 
 The mod talks to OBS directly over **obs-websocket** — there's no separate app to run.
 
@@ -62,10 +63,12 @@ Recording Path** (default `~/Movies`).
 |---|---|
 | **Record rules** | Which runs to clip, as `A-B` ranges. A run is clipped if it **started at or before A%** and **reached at least B%**. Comma-separate several. See examples below. |
 | **Record in practice mode** | If off (default), runs completed in practice mode are ignored. |
-| **Seconds after win** | How long to keep recording after a run matches (so the win animation lands in the clip) before saving. Default 5. |
+| **Seconds before run** | Extra footage kept before the run started (only when ffmpeg trimming is on). Default 5. |
+| **Seconds after run** | Extra footage kept after the run ends, so the win/death lands in the clip. Default 5. |
 | **OBS host** | OBS WebSocket host. Leave as `localhost` unless OBS runs on another machine. |
 | **OBS port** | OBS WebSocket port (from Tools → WebSocket Server Settings). Default `4455`. |
 | **OBS password** | Your OBS WebSocket password. Leave blank only if you disabled authentication. |
+| **ffmpeg path** | Optional. Path to ffmpeg to auto-trim clips to the run length. Blank = auto-detect (`~/bin`, Homebrew, `/usr`). Without ffmpeg, clips are the full replay-buffer length. |
 
 ### Record rules — examples
 
@@ -82,6 +85,6 @@ Recording Path** (default `~/Movies`).
 ## Notes
 
 - **Clips include all your OBS audio** — set up game audio + mic in OBS and both end up in the clip.
-- **Clip length = your Replay Buffer length.** Want shorter clips? Lower the Maximum Replay Time in OBS.
+- **Clip length:** with ffmpeg, clips are trimmed to the run length + padding. Without it, you get the full Replay Buffer length (lower OBS's Maximum Replay Time for shorter clips).
 - If you see **"Clip failed"**, check that OBS is open and the Replay Buffer + WebSocket are enabled.
 - Your settings live under the mod's gear icon too — **F4** is just a shortcut to open them.
